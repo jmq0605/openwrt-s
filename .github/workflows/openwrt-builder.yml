@@ -135,14 +135,21 @@ jobs:
         echo "status=success" >> $GITHUB_OUTPUT
 
     - name: Upload firmware to release
-      uses: softprops/action-gh-release@master
-      if: steps.tag.outputs.status == 'success' && !cancelled()
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: ${{ steps.tag.outputs.release_tag }}
-        body_path: release.txt
-        files: ${{ env.FIRMWARE }}/*
+      uses: softprops/action-gh-release@v1
+  if: success()
+  with:
+    # 关键：使用你配置的 RELEASES_TOKEN，而非默认 GITHUB_TOKEN
+    token: ${{ secrets.RELEASES_TOKEN }}
+    tag_name: ${{ steps.generate_tag.outputs.release_tag }}
+    name: OpenWrt 固件 ${{ steps.generate_tag.outputs.release_tag }}
+    body: |
+      自动编译的 OpenWrt 固件，编译时间：${{ steps.generate_tag.outputs.release_tag }}
+    draft: false
+    prerelease: false
+    files: |
+      openwrt/bin/targets/*/*.bin
+      openwrt/bin/targets/*/*.img.gz
+      openwrt/bin/targets/*/*.sysupgrade.bin
 
     - name: Delete workflow runs
       uses: Mattraks/delete-workflow-runs@main
